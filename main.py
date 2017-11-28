@@ -36,13 +36,13 @@ def load_vgg(sess, vgg_path):
     tf.saved_model.loader.load(sess, [vgg_tag,], vgg_path)
 
     graph = tf.get_default_graph()
-    vgg_input_tensor = graph.get_tensor_by_name(vgg_input_tensor_name)
-    vgg_keep_prob_tensor = graph.get_tensor_by_name(vgg_keep_prob_tensor_name)
-    vgg_layer3_out_tensor = graph.get_tensor_by_name(vgg_layer3_out_tensor_name)
-    vgg_layer4_out_tensor = graph.get_tensor_by_name(vgg_layer4_out_tensor_name)
-    vgg_layer7_out_tensor = graph.get_tensor_by_name(vgg_layer7_out_tensor_name)
+    image_input = graph.get_tensor_by_name(vgg_input_tensor_name)
+    keep_prob = graph.get_tensor_by_name(vgg_keep_prob_tensor_name)
+    layer3_out = graph.get_tensor_by_name(vgg_layer3_out_tensor_name)
+    layer4_out = graph.get_tensor_by_name(vgg_layer4_out_tensor_name)
+    layer7_out = graph.get_tensor_by_name(vgg_layer7_out_tensor_name)
 
-    return vgg_input_tensor, vgg_keep_prob_tensor, vgg_layer3_out_tensor, vgg_layer4_out_tensor, vgg_layer7_out_tensor
+    return image_input, keep_prob, layer3_out, layer4_out, layer7_out
 tests.test_load_vgg(load_vgg, tf)
 
 
@@ -55,8 +55,43 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :param num_classes: Number of classes to classify
     :return: The Tensor for the last layer of output
     """
-    # TODO: Implement function
-    return None
+    # DONE: Implement function
+
+    # 1x1 Convolutional layer: maintain spatial information, adjust depth.
+    # 1x1 conv (?x5x18x4096) -> (?x5x18x2)
+    vgg_layer7_conv = tf.layers.conv2d(vgg_layer7_out, num_classes, kernel_size=1, strides=1, padding='same',
+                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    # 1x1 conv (?x10x36x512) -> (?x10x36x2)
+    vgg_layer4_conv = tf.layers.conv2d(vgg_layer4_out, num_classes, kernel_size=1, strides=1, padding='same',
+                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    # 1x1 conv (?x20x72x256) -> (?x20x72x2)
+    vgg_layer3_conv = tf.layers.conv2d(vgg_layer3_out, num_classes, kernel_size=1, strides=1, padding='same',
+                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    ## Decoder
+    # output: (?x5x18x2)
+    output = vgg_layer7_conv
+
+    # 2x Up sampling (?x5x18x2) -> (?x10x36x2)
+    output = tf.layers.conv2d_transpose(output, num_classes, kernel_size=4, strides=2, padding='same',
+                                       kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    # Add skip layer
+    output = tf.add(output, vgg_layer4_conv)
+
+    # 2x Up sampling (?x10x36x2) -> (?x20x72x2)
+    output = tf.layers.conv2d_transpose(output, num_classes, kernel_size=4, strides=2, padding='same',
+                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    # Add skip layer
+    output = tf.add(output, vgg_layer3_conv)
+
+    # 8x Up sampling (?x20x72x2) -> (?x160x576x2)
+    output = tf.layers.conv2d_transpose(output, num_classes, kernel_size=16, strides=8, padding='same',
+                                        kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+    # Return shape: batch_size x image_width x image_height x num_classes
+    return output
 tests.test_layers(layers)
 
 
@@ -70,6 +105,9 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     :return: Tuple of (logits, train_op, cross_entropy_loss)
     """
     # TODO: Implement function
+
+
+
     return None, None, None
 tests.test_optimize(optimize)
 
