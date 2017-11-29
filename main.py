@@ -169,7 +169,7 @@ def run():
 
     # Parameters
     epochs = 10
-    batch_size = 2
+    batch_size = 5
 
     with tf.Session() as sess:
 
