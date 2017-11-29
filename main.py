@@ -174,7 +174,7 @@ def run():
     with tf.Session() as sess:
 
         # Initializing the variables
-        sess.run(tf.global_variables_initializer())
+        # sess.run(tf.global_variables_initializer())
 
         learning_rate = tf.placeholder("float", name="learning_rate")
         correct_label = tf.placeholder("float", shape=[None, None, None, num_classes], name="correct_label")
@@ -193,6 +193,7 @@ def run():
         logits, train_op, cross_entropy_loss = optimize(layer_output, correct_label, learning_rate, num_classes)
 
         # DONE: Train NN using the train_nn function
+        sess.run(tf.global_variables_initializer())
         train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
                  correct_label, keep_prob, learning_rate)
         # DONE: Save inference data using helper.save_inference_samples
