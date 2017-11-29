@@ -168,15 +168,16 @@ def run():
     #  https://www.cityscapes-dataset.com/
 
     # Parameters
-    learning_rate = tf.placeholder("float", name="learning_rate")
-    correct_label = tf.placeholder("float", shape=[None, None, None, num_classes], name="correct_label")
     epochs = 10
-    batch_size = 1
+    batch_size = 2
 
     with tf.Session() as sess:
 
         # Initializing the variables
         sess.run(tf.global_variables_initializer())
+
+        learning_rate = tf.placeholder("float", name="learning_rate")
+        correct_label = tf.placeholder("float", shape=[None, None, None, num_classes], name="correct_label")
 
         # Path to vgg model
         vgg_path = os.path.join(data_dir, 'vgg')
